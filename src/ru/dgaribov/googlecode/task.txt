@@ -1,0 +1,44 @@
+Please use this Google doc to code during your interview. To free your hands for coding, we recommend that you use a headset or a phone with speaker option.
+
+Given a MAKE file listing a set of targets and each's dependencies, find a valid build order for a given target.
+
+Example:
+
+a: A.java b c
+b: B.java
+c: d e a
+d: D.java
+e: E.java F.java data.txt
+
+List<String> listOfFiles(Map<String, List<String>> theMap, String dependency) {
+	List<String> result = new LinkedList<>();
+	Stack<String> depStack = new LinkedList<>();
+	for (int i = 0; i < theMap.get(depStack.peek()); i++ ) {
+		String el = theMap.get(depStack.peek()).get(i);
+if (theMap.get(el) != null) {
+	depStack.push(dependency);
+	continue;
+}
+result.add(el);
+if (i + 1 == theMap.get(depStack.peek()).size()) depStack.pop();
+}
+}
+
+
+List<String> listOfFilesRec(Map<String, List<String>> theMap, String dependency) {
+
+	List<String> result = new LinkedList<>();
+	for (String el: theMap.get(dependency)) {
+
+	Set<String> contents = new HashSet<>();
+		if (!theMap.contains(el)) contents.add(el);
+		else {
+			result.addAll(listOfFilesRec(theMap, el));
+}
+}
+
+result.addAll(contents);
+return result;
+}
+
+
