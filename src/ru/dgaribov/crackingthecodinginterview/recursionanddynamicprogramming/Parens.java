@@ -4,19 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Parens {
-    void addParen(List<String> list, int leftRem, int rightRem, char[] str, int index) {
-        if (leftRem < 0 || rightRem < leftRem) return;
+    void addParen(List<String> list, int leftRemaining, int rightRemaining, char[] str, int index) {
+        if (leftRemaining < 0 || rightRemaining < leftRemaining) return;
 
-        if (leftRem == 0 && rightRem == 0) {
+        if (leftRemaining == 0 && rightRemaining == 0) {
             list.add(new String(str));
             return;
         }
 
         str[index] = '(';
-        addParen(list, leftRem - 1, rightRem, str, index + 1);
+        addParen(list, leftRemaining - 1, rightRemaining, str, index + 1);
 
         str[index] = ')';
-        addParen(list, leftRem, rightRem - 1, str, index + 1);
+        addParen(list, leftRemaining, rightRemaining - 1, str, index + 1);
     }
 
     List<String> parens(int count) {
@@ -28,6 +28,6 @@ public class Parens {
 
     public static void main(String[] args) {
         Parens parens = new Parens();
-        System.out.println(parens.parens(1));
+        System.out.println(parens.parens(3));
     }
 }
