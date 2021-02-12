@@ -3,6 +3,7 @@ package ru.dgaribov.yandexcode.interview20200806;
 import javafx.util.Pair;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author David Garibov
@@ -54,25 +55,27 @@ class EquivalentNodes {
 
 
     Pair<Node, Node> findEquivalents(Node root) {
-        Pair<Node, Node> result = new Pair<>();
-        findSubSet(root, new HashMap<Integer, Node>(), reult);
-        return result;
+//        Pair<Node, Node> result = new Pair<>();
+//        findSubSet(root, new HashMap<Integer, Node>(), result);
+//        return result;
+        return null;
     }
 
 
-    int findSubSet(Node node, Map<Integer, Node> theMap, Pair<Node, Node> reuslt) {
-        if (node == null) return 0;
-        if (result.getFirst() != null) return -1;
-        int nodeVal = 1 << 'Z' - node.val;
-        nodeVal = nodeVal | findSubSet(node.left, theMap);
-        nodeVal = nodeVal | findSubSet(node.right, theMap);
-        if (theMap.contains(nodeVal)) {
-            result.setFirst(node);
-            result.setSecond(theMap.get(nodeVal));
-            return -1;
-        }
-        theMap.put(nodeVal, node);
-        return nodeVal;
+    int findSubSet(Node node, Map<Integer, Node> theMap, Pair<Node, Node> result) {
+//        if (node == null) return 0;
+//        if (result.getFirst() != null) return -1;
+//        int nodeVal = 1 << 'Z' - node.val;
+//        nodeVal = nodeVal | findSubSet(node.left, theMap);
+//        nodeVal = nodeVal | findSubSet(node.right, theMap);
+//        if (theMap.contains(nodeVal)) {
+//            result.setFirst(node);
+//            result.setSecond(theMap.get(nodeVal));
+//            return -1;
+//        }
+//        theMap.put(nodeVal, node);
+//        return nodeVal;
+        return 0;
     }
 }
 
@@ -84,4 +87,3 @@ class Node {
 }
 
 
-class

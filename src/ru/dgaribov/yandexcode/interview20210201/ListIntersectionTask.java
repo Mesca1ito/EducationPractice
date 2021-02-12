@@ -36,7 +36,7 @@ public class ListIntersectionTask {
 
 
 
-    List<String> intersection(List<String> first, List<String> second) {
+    List<String> intersection2(List<String> first, List<String> second) {
         if (first == null || second == null) return null;
         if (first.size() * second.size() == 0) return null;
 
