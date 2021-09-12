@@ -15,7 +15,8 @@ public class Robots {
     private List<Robot> robots;
     private boolean[][] cityMap;
 
-    int[] ordersPerIterations;
+    // Where orders are located on the map
+    private Map<String, List<Order>> ordersMap;
 
     public static void main(String[] args) {
         Robots app = new Robots();
@@ -39,10 +40,10 @@ public class Robots {
 
         // Number of iterations
         int T = Integer.parseInt(line[0]);
-        app.ordersPerIterations = new int[T];
         // Number of orders
         int D = Integer.parseInt(line[1]);
         app.orders = new ArrayList<>(D);
+        app.ordersMap = new HashMap<>();
 
         int[][] robotCoords = app.robotInitCoordinates(cityMap, maxTips, cost, T, D);
         System.out.println(robotCoords.length);
@@ -57,19 +58,24 @@ public class Robots {
             String ln = scanner.nextLine();
             // Количество курьерских заказов
             int k = Integer.parseInt(ln);
-            app.ordersPerIterations[i] = k;
             if (k == 0) continue;
             for (int j = 0; j < k; j++) {
                 line = scanner.nextLine().split(" ");
-                app.orders.add(new Order(
+                Order newOrder = new Order(
                         Integer.parseInt(line[0]),
                         Integer.parseInt(line[1]),
                         Integer.parseInt(line[2]),
                         Integer.parseInt(line[3]),
                         i
-                ));
+                );
+                app.orders.add(newOrder);
+                List<Order> ordersInGivenLocation = app.ordersMap.computeIfAbsent(line[0] + "-" + line[1], (s) -> new ArrayList<>());
+                ordersInGivenLocation.add(newOrder);
             }
-            String[] robotActions = app.iteration();
+            String[] robotsActions = app.iteration();
+            for (String robotActions: robotsActions) {
+                System.out.println(robotActions);
+            }
         }
 
     }
@@ -94,24 +100,25 @@ public class Robots {
                     if (robot.currentOrder.status == OrderStatus.PICKING) {
                         // Если робот уже на клетке с заказом
                         if (robot.curX == robot.currentOrder.sRow && robot.curY == robot.currentOrder.sCol) {
+                            robot.currentOrder = pickOldestOrderFromTheCell(robot.curX, robot.curY);
+                            if (robot.currentOrder == null) {
+                                robotsActions[i] += 'S';
+                                continue;
+                            }
                             robotsActions[i] += 'T';
-                            robot.currentOrder.status = OrderStatus.DELIVERING;
                             robot.path = findPath(robot.currentOrder.sRow, robot.currentOrder.sCol,
                                     robot.currentOrder.endRow, robot.currentOrder.endCol, cityMap);
-                            continue robotsLoop;
                             // Если нет - идём к нему
                         } else {
                             Step nextStep = robot.path.remove();
                             robotsActions[i] += nextStep.action;
                             robot.curX = nextStep.x;
                             robot.curY = nextStep.y;
-                            continue robotsLoop;
                         }
                         // Если робот уже доставляет заказ
                     } else if (robot.currentOrder.status == OrderStatus.DELIVERING) {
                         // Если робот уже в конечной точке
                         if (robot.curX == robot.currentOrder.endRow && robot.curY == robot.currentOrder.endCol) {
-                            ordersPerIterations[robot.currentOrder.numberOfIteration]--;
                             robotsActions[i] += 'P';
                             orders.remove(robot.currentOrder);
                             robot.currentOrder = null;
@@ -120,7 +127,6 @@ public class Robots {
                             robotsActions[i] += nextStep.action;
                             robot.curX = nextStep.x;
                             robot.curY = nextStep.y;
-                            continue robotsLoop;
                         }
                     }
                 }
@@ -135,9 +141,32 @@ public class Robots {
                     }
 
                     List<Map.Entry<Order, Queue<Step>>> ordered = orderDistanceMap.entrySet().stream().sorted(Comparator.comparingInt(e -> e.getValue().size())).collect(Collectors.toList());
-                    for (Map.Entry<Order, Queue<Step>> orderDistance: ordered) {
-                        //TODO: проверка на то, что заказ самый старый в ячейке
-                        //if (есть другие заказы и этот не самый старый в ячйке)
+                    for (Map.Entry<Order, Queue<Step>> orderDistance : ordered) {
+                        Order order = orderDistance.getKey();
+                        Order oldestOrderInTheCell = findOldestOrderInTheCell(order.sRow, order.sCol);
+                        if (oldestOrderInTheCell != order) continue;
+                        robot.currentOrder = order;
+                        robot.currentOrder.status = OrderStatus.PICKING;
+                        robot.path = orderDistance.getValue();
+                        // Если робот уже на клетке с заказом
+                        if (robot.curX == robot.currentOrder.sRow && robot.curY == robot.currentOrder.sCol) {
+                            robot.currentOrder = pickOldestOrderFromTheCell(robot.curX, robot.curY);
+                            if (robot.currentOrder == null) {
+                                robotsActions[i] += 'S';
+                                continue robotsLoop;
+                            }
+                            robotsActions[i] += 'T';
+                            robot.path = findPath(robot.currentOrder.sRow, robot.currentOrder.sCol,
+                                    robot.currentOrder.endRow, robot.currentOrder.endCol, cityMap);
+                            continue robotsLoop;
+                            // Если нет - идём к нему
+                        } else {
+                            Step nextStep = robot.path.remove();
+                            robotsActions[i] += nextStep.action;
+                            robot.curX = nextStep.x;
+                            robot.curY = nextStep.y;
+                            continue robotsLoop;
+                        }
                     }
 
                     robotsActions[i] += 'S';
@@ -148,12 +177,26 @@ public class Robots {
         return robotsActions;
     }
 
-    int findOldestIteration() {
-        for (int i = 0; i < ordersPerIterations.length; i++) {
-            if (ordersPerIterations[i] > 0) return i;
-        }
-        return -1;
+    private Order pickOldestOrderFromTheCell(int x, int y) {
+        List<Order> orders = this.ordersMap.get(x + "-" + y);
+        Order oldestOrder = findOldestOrderInTheCell(x, y);
+        if (oldestOrder == null) return null;
+        orders.remove(oldestOrder);
+        oldestOrder.status = OrderStatus.DELIVERING;
+        return oldestOrder;
     }
+
+    private Order findOldestOrderInTheCell(int x, int y) {
+        List<Order> orders = this.ordersMap.get(x + "-" + y);
+        if (orders.isEmpty()) return null;
+        Order oldestOrder = orders.get(0);
+        for (int i = 1; i < orders.size(); i++) {
+            Order order = orders.get(i);
+            if (order.numberOfIteration < oldestOrder.numberOfIteration) oldestOrder = order;
+        }
+        return oldestOrder;
+    }
+
 
     private Queue<Step> findPath(int sRow, int sCol, int fRow, int fCol, boolean[][] cityMap) {
         Node start = new Node(sRow, sCol);
