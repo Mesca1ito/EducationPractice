@@ -1,5 +1,7 @@
 package ru.dgaribov.yandexcode.sdcmeetup2021;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -46,11 +48,12 @@ public class Robots {
         app.ordersMap = new HashMap<>();
 
         int[][] robotCoords = app.robotInitCoordinates(cityMap, maxTips, cost, T, D);
+        robotCoords = new int[][] {{0, 0}};
         System.out.println(robotCoords.length);
         app.robots = new ArrayList<>(robotCoords.length);
         for (int[] coords : robotCoords) {
             app.robots.add(new Robot(coords[0], coords[1]));
-            System.out.println(coords[0] + " " + coords[1]);
+            System.out.println((coords[0] + 1) + " " + (coords[1] + 1));
         }
 
         // Начинаем итерации
@@ -62,10 +65,10 @@ public class Robots {
             for (int j = 0; j < k; j++) {
                 line = scanner.nextLine().split(" ");
                 Order newOrder = new Order(
-                        Integer.parseInt(line[0]),
-                        Integer.parseInt(line[1]),
-                        Integer.parseInt(line[2]),
-                        Integer.parseInt(line[3]),
+                        Integer.parseInt(line[0]) - 1,
+                        Integer.parseInt(line[1]) - 1,
+                        Integer.parseInt(line[2]) - 1,
+                        Integer.parseInt(line[3]) - 1,
                         i
                 );
 
@@ -75,7 +78,7 @@ public class Robots {
                 newOrder.deliveryPath = deliveryPath;
 
                 app.orders.add(newOrder);
-                List<Order> ordersInGivenLocation = app.ordersMap.computeIfAbsent(line[0] + "-" + line[1], (s) -> new ArrayList<>());
+                List<Order> ordersInGivenLocation = app.ordersMap.computeIfAbsent(newOrder.sRow + "-" + newOrder.sCol, (s) -> new ArrayList<>());
                 ordersInGivenLocation.add(newOrder);
             }
             String[] robotsActions = app.iteration();
@@ -194,6 +197,7 @@ public class Robots {
         List<Order> orders = this.ordersMap.get(x + "-" + y);
         if (orders.isEmpty()) return null;
         Order oldestOrder = orders.get(0);
+        if (orders.size() == 1) return oldestOrder;
         for (int i = 1; i < orders.size(); i++) {
             Order order = orders.get(i);
             if (order.numberOfIteration < oldestOrder.numberOfIteration) oldestOrder = order;
@@ -204,6 +208,7 @@ public class Robots {
 
     private Queue<Step> findPath(int sRow, int sCol, int fRow, int fCol, boolean[][] cityMap) {
         Node start = new Node(sRow, sCol);
+        start.trace = new LinkedList<>();
         boolean[][] visited = new boolean[cityMap.length][cityMap.length];
         Queue<Node> queue = new LinkedList<>();
         queue.add(start);
@@ -215,28 +220,28 @@ public class Robots {
             visited[node.x][node.y] = true;
             // U
             if (cellIsValid(node.x - 1, node.y, cityMap, visited)) {
-                Queue<Step> trace = node.trace;
+                Queue<Step> trace = new LinkedList<>(node.trace);
                 Step step = new Step('U', node.x - 1, node.y);
                 trace.add(step);
                 queue.add(new Node(node.x - 1, node.y, trace));
             }
             // L
             if (cellIsValid(node.x, node.y - 1, cityMap, visited)) {
-                Queue<Step> trace = node.trace;
+                Queue<Step> trace = new LinkedList<>(node.trace);
                 Step step = new Step('L', node.x, node.y - 1);
                 trace.add(step);
                 queue.add(new Node(node.x, node.y - 1, trace));
             }
             // D
             if (cellIsValid(node.x + 1, node.y, cityMap, visited)) {
-                Queue<Step> trace = node.trace;
+                Queue<Step> trace = new LinkedList<>(node.trace);
                 Step step = new Step('D', node.x + 1, node.y);
                 trace.add(step);
                 queue.add(new Node(node.x + 1, node.y, trace));
             }
             // R
             if (cellIsValid(node.x, node.y + 1, cityMap, visited)) {
-                Queue<Step> trace = node.trace;
+                Queue<Step> trace = new LinkedList<>(node.trace);
                 Step step = new Step('R', node.x, node.y + 1);
                 trace.add(step);
                 queue.add(new Node(node.x, node.y + 1, trace));
@@ -244,7 +249,17 @@ public class Robots {
         }
 
         return null;
+    }
 
+//    @Test
+    public void testFindPath() {
+        Robots app = new Robots();
+        app.cityMap = new boolean[][]{{false, false, false, false},
+                {false, false, false, false},
+                {false, false, false, false},
+                {false, false, false, false}};
+        Queue<Step> steps = app.findPath(0, 0, 3, 3, app.cityMap);
+        System.out.println(steps);
     }
 
     boolean cellIsValid(int x, int y, boolean[][] cityMap, boolean[][] visited) {
