@@ -1,6 +1,7 @@
 package ru.dgaribov.yandexcode.sdcmeetup2021;
 
 
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,7 +72,7 @@ public class Robots {
                 );
 
                 // Не берём заказы, которые невозможно доставить
-                Queue<Step> deliveryPath = app.findPath(newOrder.sRow, newOrder.sCol, newOrder.endRow, newOrder.endCol, cityMap);
+                Queue<Character> deliveryPath = app.findPath(newOrder.sRow, newOrder.sCol, newOrder.endRow, newOrder.endCol, cityMap);
                 if (deliveryPath == null) continue;
                 newOrder.deliveryPath = deliveryPath;
 
@@ -116,10 +117,9 @@ public class Robots {
                             robot.path = robot.currentOrder.deliveryPath;
                             // Если нет - идём к нему
                         } else {
-                            Step nextStep = robot.path.remove();
-                            robotsActions[i] += nextStep.action;
-                            robot.curX = nextStep.x;
-                            robot.curY = nextStep.y;
+                            Character nextStep = robot.path.remove();
+                            robotsActions[i] += nextStep;
+                            makeStep(robot, nextStep);
                         }
                         // Если робот уже доставляет заказ
                     } else if (robot.currentOrder.status == OrderStatus.DELIVERING) {
@@ -129,25 +129,24 @@ public class Robots {
                             orders.remove(robot.currentOrder);
                             robot.currentOrder = null;
                         } else {
-                            Step nextStep = robot.path.remove();
-                            robotsActions[i] += nextStep.action;
-                            robot.curX = nextStep.x;
-                            robot.curY = nextStep.y;
+                            Character nextStep = robot.path.remove();
+                            robotsActions[i] += nextStep;
+                            makeStep(robot, nextStep);
                         }
                     }
                 }
                 // А если у робота нет заказа
                 else {
                     // Находим ближайшие из доступных заказов
-                    Map<Order, Queue<Step>> orderDistanceMap = new HashMap<>();
+                    Map<Order, Queue<Character>> orderDistanceMap = new HashMap<>();
                     List<Order> idleOrders = this.orders.stream().filter(o -> o.status == OrderStatus.IDLE).collect(Collectors.toList());
                     for (Order order : idleOrders) {
-                        Queue<Step> path = findPath(robot.curX, robot.curY, order.sRow, order.sCol, cityMap);
+                        Queue<Character> path = findPath(robot.curX, robot.curY, order.sRow, order.sCol, cityMap);
                         if (path != null) orderDistanceMap.put(order, path);
                     }
 
-                    List<Map.Entry<Order, Queue<Step>>> ordered = orderDistanceMap.entrySet().stream().sorted(Comparator.comparingInt(e -> e.getValue().size())).collect(Collectors.toList());
-                    for (Map.Entry<Order, Queue<Step>> orderDistance : ordered) {
+                    List<Map.Entry<Order, Queue<Character>>> ordered = orderDistanceMap.entrySet().stream().sorted(Comparator.comparingInt(e -> e.getValue().size())).collect(Collectors.toList());
+                    for (Map.Entry<Order, Queue<Character>> orderDistance : ordered) {
                         Order order = orderDistance.getKey();
                         Order oldestOrderInTheCell = findOldestOrderInTheCell(order.sRow, order.sCol);
                         if (oldestOrderInTheCell != order) continue;
@@ -166,10 +165,9 @@ public class Robots {
                             continue robotsLoop;
                             // Если нет - идём к нему
                         } else {
-                            Step nextStep = robot.path.remove();
-                            robotsActions[i] += nextStep.action;
-                            robot.curX = nextStep.x;
-                            robot.curY = nextStep.y;
+                            Character nextStep = robot.path.remove();
+                            robotsActions[i] += nextStep;
+                            makeStep(robot, nextStep);
                             continue robotsLoop;
                         }
                     }
@@ -183,8 +181,22 @@ public class Robots {
         return robotsActions;
     }
 
+    private void makeStep(Robot robot, Character step) {
+        if (step == 'U') {
+            robot.curX -= 1;
+        }
+        if (step == 'D') {
+            robot.curX += 1;
+        }
+        if (step == 'L') {
+            robot.curY -= 1;
+        }
+        if (step == 'R') {
+            robot.curY += 1;
+        }
+    }
+
     /**
-     *
      * @param x
      * @param y
      * @return забирает самый старый заказ в текущей клетке
@@ -199,7 +211,6 @@ public class Robots {
     }
 
     /**
-     *
      * @param x
      * @param y
      * @return находит самый старый заказ в текущей клетке
@@ -226,7 +237,7 @@ public class Robots {
      * @param cityMap карта города с препятствиями
      * @return очередь шагов от одной точки до другой
      */
-    private Queue<Step> findPath(int sRow, int sCol, int fRow, int fCol, boolean[][] cityMap) {
+    private Queue<Character> findPath(int sRow, int sCol, int fRow, int fCol, boolean[][] cityMap) {
         Node start = new Node(sRow, sCol);
         start.trace = new ArrayDeque<>();
         boolean[][] visited = new boolean[cityMap.length][cityMap.length];
@@ -239,35 +250,30 @@ public class Robots {
             }
             visited[node.x][node.y] = true;
 
-            Queue<Step> trace;
-            Step step;
+            Queue<Character> trace;
 
             // U
             if (cellIsValid(node.x - 1, node.y, cityMap, visited)) {
                 trace = new ArrayDeque<>(node.trace);
-                step = new Step('U', node.x - 1, node.y);
-                trace.add(step);
+                trace.add('U');
                 queue.add(new Node(node.x - 1, node.y, trace));
             }
             // L
             if (cellIsValid(node.x, node.y - 1, cityMap, visited)) {
                 trace = new ArrayDeque<>(node.trace);
-                step = new Step('L', node.x, node.y - 1);
-                trace.add(step);
+                trace.add('L');
                 queue.add(new Node(node.x, node.y - 1, trace));
             }
             // D
             if (cellIsValid(node.x + 1, node.y, cityMap, visited)) {
                 trace = new ArrayDeque<>(node.trace);
-                step = new Step('D', node.x + 1, node.y);
-                trace.add(step);
+                trace.add('D');
                 queue.add(new Node(node.x + 1, node.y, trace));
             }
             // R
             if (cellIsValid(node.x, node.y + 1, cityMap, visited)) {
                 trace = new ArrayDeque<>(node.trace);
-                step = new Step('R', node.x, node.y + 1);
-                trace.add(step);
+                trace.add('R');
                 queue.add(new Node(node.x, node.y + 1, trace));
             }
         }
@@ -275,22 +281,20 @@ public class Robots {
         return null;
     }
 
-//    @Test
+//        @Test
     public void testFindPath() {
         Robots app = new Robots();
         app.cityMap = new boolean[][]{{false, false, false, false},
                 {false, false, false, false},
                 {false, false, false, false},
                 {false, false, false, false}};
-        Queue<Step> steps = app.findPath(0, 0, 3, 3, app.cityMap);
+        Queue<Character> steps = app.findPath(0, 0, 3, 3, app.cityMap);
         System.out.println(steps);
     }
 
     private boolean cellIsValid(int x, int y, boolean[][] cityMap, boolean[][] visited) {
         return x >= 0 && y >= 0 && x < cityMap.length && y < cityMap.length && !cityMap[x][y] && !visited[x][y];
     }
-
-
 
 
     private int[][] robotInitCoordinates(boolean[][] cityMap, int maxTips, long cost,
@@ -376,12 +380,12 @@ class Robot {
     int curX;
     int curY;
     Order currentOrder;
-    Queue<Step> path;
+    Queue<Character> path;
 
     Robot(int x, int y) {
         this.curX = x;
         this.curY = y;
-        this.path = new LinkedList<>();
+        this.path = new ArrayDeque<>();
     }
 }
 
@@ -392,7 +396,7 @@ class Order {
     int endCol;
     OrderStatus status;
     int numberOfIteration;
-    Queue<Step> deliveryPath;
+    Queue<Character> deliveryPath;
 
     public Order(int sRow, int sCol, int endRow, int endCol, int numberOfInteraction) {
         this.sRow = sRow;
@@ -407,7 +411,7 @@ class Order {
 class Node {
     int x;
     int y;
-    Queue<Step> trace;
+    Queue<Character> trace;
 
     public Node(int x, int y) {
         this.x = x;
@@ -415,24 +419,13 @@ class Node {
         this.trace = new ArrayDeque<>();
     }
 
-    public Node(int x, int y, Queue<Step> trace) {
+    public Node(int x, int y, Queue<Character> trace) {
         this.x = x;
         this.y = y;
         this.trace = trace;
     }
 }
 
-class Step {
-    char action;
-    int x;
-    int y;
-
-    public Step(char action, int x, int y) {
-        this.action = action;
-        this.x = x;
-        this.y = y;
-    }
-}
 
 enum OrderStatus {
     IDLE, PICKING, DELIVERING
