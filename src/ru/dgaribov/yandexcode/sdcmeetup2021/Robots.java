@@ -1,6 +1,5 @@
 package ru.dgaribov.yandexcode.sdcmeetup2021;
 
-import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -229,7 +228,7 @@ public class Robots {
      */
     private Queue<Step> findPath(int sRow, int sCol, int fRow, int fCol, boolean[][] cityMap) {
         Node start = new Node(sRow, sCol);
-        start.trace = new LinkedList<>();
+        start.trace = new ArrayDeque<>();
         boolean[][] visited = new boolean[cityMap.length][cityMap.length];
         Queue<Node> queue = new LinkedList<>();
         queue.add(start);
@@ -239,31 +238,35 @@ public class Robots {
                 return node.trace;
             }
             visited[node.x][node.y] = true;
+
+            Queue<Step> trace;
+            Step step;
+
             // U
             if (cellIsValid(node.x - 1, node.y, cityMap, visited)) {
-                Queue<Step> trace = new LinkedList<>(node.trace);
-                Step step = new Step('U', node.x - 1, node.y);
+                trace = new ArrayDeque<>(node.trace);
+                step = new Step('U', node.x - 1, node.y);
                 trace.add(step);
                 queue.add(new Node(node.x - 1, node.y, trace));
             }
             // L
             if (cellIsValid(node.x, node.y - 1, cityMap, visited)) {
-                Queue<Step> trace = new LinkedList<>(node.trace);
-                Step step = new Step('L', node.x, node.y - 1);
+                trace = new ArrayDeque<>(node.trace);
+                step = new Step('L', node.x, node.y - 1);
                 trace.add(step);
                 queue.add(new Node(node.x, node.y - 1, trace));
             }
             // D
             if (cellIsValid(node.x + 1, node.y, cityMap, visited)) {
-                Queue<Step> trace = new LinkedList<>(node.trace);
-                Step step = new Step('D', node.x + 1, node.y);
+                trace = new ArrayDeque<>(node.trace);
+                step = new Step('D', node.x + 1, node.y);
                 trace.add(step);
                 queue.add(new Node(node.x + 1, node.y, trace));
             }
             // R
             if (cellIsValid(node.x, node.y + 1, cityMap, visited)) {
-                Queue<Step> trace = new LinkedList<>(node.trace);
-                Step step = new Step('R', node.x, node.y + 1);
+                trace = new ArrayDeque<>(node.trace);
+                step = new Step('R', node.x, node.y + 1);
                 trace.add(step);
                 queue.add(new Node(node.x, node.y + 1, trace));
             }
@@ -409,7 +412,7 @@ class Node {
     public Node(int x, int y) {
         this.x = x;
         this.y = y;
-        this.trace = new LinkedList<>();
+        this.trace = new ArrayDeque<>();
     }
 
     public Node(int x, int y, Queue<Step> trace) {
