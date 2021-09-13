@@ -48,7 +48,7 @@ public class Robots {
         app.ordersMap = new HashMap<>();
 
         int[][] robotCoords = app.robotInitCoordinates(cityMap, maxTips, cost, T, D);
-        robotCoords = new int[][] {{0, 0}};
+//        robotCoords = new int[][] {{0, 0}};
         System.out.println(robotCoords.length);
         app.robots = new ArrayList<>(robotCoords.length);
         for (int[] coords : robotCoords) {
@@ -61,7 +61,6 @@ public class Robots {
             String ln = scanner.nextLine();
             // Количество курьерских заказов
             int k = Integer.parseInt(ln);
-            if (k == 0) continue;
             for (int j = 0; j < k; j++) {
                 line = scanner.nextLine().split(" ");
                 Order newOrder = new Order(
@@ -90,7 +89,7 @@ public class Robots {
     }
 
     /**
-     * Для каждого заказа находим ближайшего по реальному пути робота, отправляем его на заказ оптимальным путём
+     * Для каждого робота определяем список необходимых действий и выполняем их
      *
      * @return список действий для каждого робота
      */
@@ -99,7 +98,7 @@ public class Robots {
         Arrays.fill(robotsActions, "");
         for (int step = 0; step < STEPS_PER_INTERACTION; step++) {
 
-            // Если нет - ищем новый заказ
+
             robotsLoop:
             for (int i = 0; i < robots.size(); i++) {
                 Robot robot = robots.get(i);
@@ -176,6 +175,7 @@ public class Robots {
                         }
                     }
 
+                    // Иначе просто стоим на месте
                     robotsActions[i] += 'S';
 
                 }
@@ -184,6 +184,12 @@ public class Robots {
         return robotsActions;
     }
 
+    /**
+     *
+     * @param x
+     * @param y
+     * @return забирает самый старый заказ в текущей клетке
+     */
     private Order pickOldestOrderFromTheCell(int x, int y) {
         List<Order> orders = this.ordersMap.get(x + "-" + y);
         Order oldestOrder = findOldestOrderInTheCell(x, y);
@@ -193,6 +199,12 @@ public class Robots {
         return oldestOrder;
     }
 
+    /**
+     *
+     * @param x
+     * @param y
+     * @return находит самый старый заказ в текущей клетке
+     */
     private Order findOldestOrderInTheCell(int x, int y) {
         List<Order> orders = this.ordersMap.get(x + "-" + y);
         if (orders.isEmpty()) return null;
@@ -205,7 +217,16 @@ public class Robots {
         return oldestOrder;
     }
 
-
+    /**
+     * Находит путь от одной ячейки до другой. Если путь невозможен - вернет null
+     *
+     * @param sRow
+     * @param sCol
+     * @param fRow
+     * @param fCol
+     * @param cityMap карта города с препятствиями
+     * @return очередь шагов от одной точки до другой
+     */
     private Queue<Step> findPath(int sRow, int sCol, int fRow, int fCol, boolean[][] cityMap) {
         Node start = new Node(sRow, sCol);
         start.trace = new LinkedList<>();
@@ -262,27 +283,11 @@ public class Robots {
         System.out.println(steps);
     }
 
-    boolean cellIsValid(int x, int y, boolean[][] cityMap, boolean[][] visited) {
+    private boolean cellIsValid(int x, int y, boolean[][] cityMap, boolean[][] visited) {
         return x >= 0 && y >= 0 && x < cityMap.length && y < cityMap.length && !cityMap[x][y] && !visited[x][y];
     }
 
-    class Node {
-        int x;
-        int y;
-        Queue<Step> trace;
 
-        public Node(int x, int y) {
-            this.x = x;
-            this.y = y;
-            this.trace = new LinkedList<>();
-        }
-
-        public Node(int x, int y, Queue<Step> trace) {
-            this.x = x;
-            this.y = y;
-            this.trace = trace;
-        }
-    }
 
 
     private int[][] robotInitCoordinates(boolean[][] cityMap, int maxTips, long cost,
@@ -393,6 +398,24 @@ class Order {
         this.endCol = endCol;
         this.numberOfIteration = numberOfInteraction;
         this.status = OrderStatus.IDLE;
+    }
+}
+
+class Node {
+    int x;
+    int y;
+    Queue<Step> trace;
+
+    public Node(int x, int y) {
+        this.x = x;
+        this.y = y;
+        this.trace = new LinkedList<>();
+    }
+
+    public Node(int x, int y, Queue<Step> trace) {
+        this.x = x;
+        this.y = y;
+        this.trace = trace;
     }
 }
 
