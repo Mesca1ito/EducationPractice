@@ -68,12 +68,18 @@ public class Robots {
                         Integer.parseInt(line[3]),
                         i
                 );
+
+                // Не берём заказы, которые невозможно доставить
+                Queue<Step> deliveryPath = app.findPath(newOrder.sRow, newOrder.sCol, newOrder.endRow, newOrder.endCol, cityMap);
+                if (deliveryPath == null) continue;
+                newOrder.deliveryPath = deliveryPath;
+
                 app.orders.add(newOrder);
                 List<Order> ordersInGivenLocation = app.ordersMap.computeIfAbsent(line[0] + "-" + line[1], (s) -> new ArrayList<>());
                 ordersInGivenLocation.add(newOrder);
             }
             String[] robotsActions = app.iteration();
-            for (String robotActions: robotsActions) {
+            for (String robotActions : robotsActions) {
                 System.out.println(robotActions);
             }
         }
@@ -106,8 +112,7 @@ public class Robots {
                                 continue;
                             }
                             robotsActions[i] += 'T';
-                            robot.path = findPath(robot.currentOrder.sRow, robot.currentOrder.sCol,
-                                    robot.currentOrder.endRow, robot.currentOrder.endCol, cityMap);
+                            robot.path = robot.currentOrder.deliveryPath;
                             // Если нет - идём к нему
                         } else {
                             Step nextStep = robot.path.remove();
@@ -156,8 +161,7 @@ public class Robots {
                                 continue robotsLoop;
                             }
                             robotsActions[i] += 'T';
-                            robot.path = findPath(robot.currentOrder.sRow, robot.currentOrder.sCol,
-                                    robot.currentOrder.endRow, robot.currentOrder.endCol, cityMap);
+                            robot.path = robot.currentOrder.deliveryPath;
                             continue robotsLoop;
                             // Если нет - идём к нему
                         } else {
@@ -365,6 +369,7 @@ class Order {
     int endCol;
     OrderStatus status;
     int numberOfIteration;
+    Queue<Step> deliveryPath;
 
     public Order(int sRow, int sCol, int endRow, int endCol, int numberOfInteraction) {
         this.sRow = sRow;
